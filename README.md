@@ -92,7 +92,7 @@ Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm chủ độ
 | **Positive (Tích cực)** | **0.92** | **0.92** | **0.92** | 1,590 | **Hạng 1** — Nhận diện hoàn hảo biểu tượng khen ngợi (`colonlove`, `good`) |
 | **Negative (Tiêu cực)** | **0.88** | **0.94** | **0.91** | 1,409 | Recall đạt **0.94** — Rất nhạy trong việc phát hiện phản hồi phàn nàn |
 | **Neutral (Trung tính)** | 0.59 | 0.21 | **0.31** | 167 | **Nút thắt cổ chai** — Bị mất nhãn nghiêm trọng (Recall chỉ đạt **0.21**) |
-| **TỔNG THỂ (Overall)** | **Macro F1:** 0.71 | **Weighted F1:** 0.88 | **Accuracy:** **89.36%** | **3,166** | **Accuracy vượt mức 89%** nhờ độ chuẩn xác cao ở 2 lớp đa số |
+| **TỔNG THỂ (Overall)** | **Macro F1:** 0.71 | **Weighted F1:** 0.88 | **Accuracy:** **89.36%** | **3,166** | **Accuracy vượt mốc 89%** nhờ độ chuẩn xác cao ở 2 lớp đa số |
 
 ---
 
@@ -114,7 +114,31 @@ Mặc dù mô hình đạt độ chính xác chung **85.92%** trên tập VNTC r
 - **Hướng giải quyết 1 (Cost-sensitive Learning):** Kích hoạt tham số `class_weight='balanced'` trong `LogisticRegression` để tự động tăng mức phạt khi mô hình đoán sai các lớp thiểu số.
 - **Hướng giải quyết 2 (Contrastive ICL / Reranking):** Đối với các câu thuộc vùng xám ngữ nghĩa (Neutral), tích hợp một module k-NN Reranking cục bộ hoặc Few-shot In-Context Learning để xác định lại đường biên nhãn.
 
-## 7. Cách chạy (Reproducibility)
+---
+
+## 7. Kết luận & Đóng góp của ML-Embed-0.6B
+
+Thực nghiệm **Dual-Probing** trên hai bộ dữ liệu chuẩn mực của tiếng Việt (VNTC và UIT-VSFC) đã kiểm chứng thành công năng lực biểu diễn vượt trội của **`codefuse-ai/ML-Embed-0.6B`**. Thay vì phải tinh chỉnh trọng số (fine-tuning) tốn kém, việc chỉ cần dùng Linear Probing (đóng băng embedding + Logistic Regression) mà vẫn đạt độ chính xác **> 85% – 89%** trên cả hai bài toán đã khẳng định: **Không gian vector tiềm ẩn (latent space) của ML-Embed-0.6B đã tự động ánh xạ và phân cụm tiếng Việt ở độ hoàn thiện cực cao.**
+
+### 7.1 Bảng tổng hợp 4 ưu điểm vượt trội của ML-Embed-0.6B
+
+| Năng lực / Khía cạnh | Ưu điểm của `ML-Embed-0.6B` | Minh chứng kỹ thuật từ thực nghiệm |
+| :--- | :--- | :--- |
+| **1. Khả năng đa thang đo (Multi-granularity Robustness)** | Bền vững trên mọi độ dài văn bản mà không bị "thiên lệch thang đo" | Đạt **85.92% Accuracy** trên văn bản báo chí dài (~500 từ) và **89.36% Accuracy** trên câu bình luận ngắn (~15–30 từ) |
+| **2. Hiệu quả mẫu siêu việt (Extreme Sample Efficiency)** | Cần rất ít dữ liệu huấn luyện để thiết lập đường biên ranh giới chuẩn xác | Chỉ cần **1.900 bài Train (~190 mẫu/chủ đề)** để phân loại cho 2.500 bài Test trên 10 chủ đề phức tạp của VNTC |
+| **3. Khả năng kháng nhiễu & Hiểu cú pháp ngách (Noise Resilience)** | Tự động nắm bắt tín hiệu ngữ nghĩa từ ký tự đặc thù mà không cần tiền xử lý phức tạp | Nhận diện chuẩn xác polarity cảm xúc từ các token quy ước như `colonlove`, `colonsad`, `wzjwz...` trên bộ UIT-VSFC |
+| **4. Hiệu năng tính toán / VRAM (Computational Efficiency)** | Kích thước gọn gàng (**~600M tham số**) nhưng mang lại chất lượng tiệm cận các mô hình lớn | Xử lý trọn vẹn dải `max_seq_length = 512` ở chuẩn `bfloat16`, hoàn tất benchmark chỉ trong **1.2 – 2.5 phút** trên card phổ thông RTX 4060 8GB |
+
+### 7.2 Đóng góp cho cộng đồng & Khuyến nghị thực tiễn
+
+- **Đóng góp phương pháp luận:** Thực nghiệm cho thấy khi xây dựng các hệ thống NLP tiếng Việt hiện đại (như phân loại văn bản tự động, hệ thống gợi ý, hay tìm kiếm ngữ nghĩa trong RAG), **không nhất thiết phải dùng các LLM hàng tỷ tham số để làm feature extractor**. Một mô hình nhúng tầm trung được huấn luyện đa ngữ tốt như `ML-Embed-0.6B` là lựa chọn cân bằng tối ưu giữa **Độ chính xác (Accuracy) — Chi phí compute — Tốc độ suy luận**.
+- **Khuyến nghị kiến trúc (Architecture Recommendation):**
+  - **Với văn bản dài & nhiều chủ đề (như VNTC):** Sử dụng `ML-Embed-0.6B` kết hợp với thuật toán cắt mẫu cân bằng lớp (Stratified Sampling) là đủ để xây dựng các hệ thống gắn thẻ báo chí tự động với chi phí thấp.
+  - **Với văn bản ngắn & cảm xúc (như UIT-VSFC):** Nên sử dụng `ML-Embed-0.6B` làm backbone trích xuất vector, nhưng kết hợp thêm trọng số mất cân bằng lớp (`class_weight='balanced'`) ở khâu phân loại để khắc phục điểm yếu trên các lớp thiểu số (như nhãn Neutral).
+
+---
+
+## 8. Cách chạy (Reproducibility)
 
 ```bash
 # 1. Cài đặt PyTorch CUDA và các thư viện thực nghiệm
