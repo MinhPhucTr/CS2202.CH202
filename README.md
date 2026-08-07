@@ -74,7 +74,7 @@ Toàn bộ pipeline thực nghiệm được thiết kế tối giản để d�
 ```bash
 # 1. Clone GitHub Repository về máy và di chuyển vào thư mục dự án
 git clone (https://github.com/MinhPhucTr/CS2202.CH202.git)
-cd YOUR_REPOSITORY_NAME
+cd CS2202.CH202
 
 # 2. Cài đặt PyTorch hỗ trợ CUDA (Khuyến nghị CUDA 12.4 cho GPU RTX)
 pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu124](https://download.pytorch.org/whl/cu124)
