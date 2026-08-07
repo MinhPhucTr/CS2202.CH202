@@ -130,16 +130,16 @@ Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm rút gọn 
 | **Chính trị Xã hội** | 0.75 | 0.86 | 0.80 | 368 | Chiếm support lớn nhất, đóng vai trò như lớp trung tâm |
 | **Khoa học** | 0.87 | 0.57 | 0.69 | 127 | Recall thấp, nhiều bài bị nhầm sang lớp *Vi tính* hoặc *Sức khỏe* |
 | **Đời sống** | 0.57 | 0.60 | **0.58** | 98 | Thiếu mẫu dễ nhầm lẫn với các chủ đề khác |
-| **TỔNG THỂ** | **Macro F1:** 0.83 | **Weighted F1:** 0.86 | **Accuracy:** **85.92%** | **2,500** | **Độ chính xác cao** với chỉ 1.900 bài Train |
+| **TỔNG THỂ** | **Macro F1:** 0.83 | **Weighted F1:** 0.86 | **Accuracy:** **85.92%** | **2.500** | **Độ chính xác cao** với chỉ 1.900 dòng Train |
 
 **Bảng 2 — Hiệu năng Phân loại Cảm xúc trên UIT-VSFC (3.166 Test):**
 
 | Nhãn | Precision | Recall | F1-Score | Support | Nhận xét |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Positive** | **0.92** | **0.92** | **0.92** | 1,590 | Phân loại và phát hiện tốt câu dạng khen ngợi |
-| **Negative** | **0.88** | **0.94** | **0.91** | 1,409 | Phân loại và phát hiện tốt câu dạng phàn nàn |
+| **Positive** | **0.92** | **0.92** | **0.92** | 1.590 | Phân loại và phát hiện tốt câu dạng khen ngợi |
+| **Negative** | **0.88** | **0.94** | **0.91** | 1.409 | Phân loại và phát hiện tốt câu dạng phàn nàn |
 | **Neutral** | 0.59 | 0.21 | **0.31** | 167 | Precision và Recall bị ảnh hưởng bởi số lượng câu quá ít |
-| **TỔNG THỂ** | **Macro F1:** 0.71 | **Weighted F1:** 0.88 | **Accuracy:** **89.36%** | **3,166** | **Accuracy vượt mốc 89%** nhờ độ chính xác cao ở 2 lớp đa số |
+| **TỔNG THỂ** | **Macro F1:** 0.71 | **Weighted F1:** 0.88 | **Accuracy:** **89.36%** | **3.166** | **Accuracy vượt mốc 89%** nhờ độ chính xác cao ở 2 lớp đa số |
 
 ---
 
