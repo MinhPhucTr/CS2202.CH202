@@ -1,4 +1,4 @@
-# Evaluating ML-Embed-0.6B on Vietnamese Text Classification & Retrieval: A Comprehensive Study on MTEB, Topic & Sentiment
+# Evaluating ML-Embed-0.6B on Vietnamese Text Classification (Sentiment, Topic) & Retrieval
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
@@ -161,3 +161,8 @@ Mặc dù mô hình đạt độ chính xác chung **85.92%** trên tập VNTC r
 
 Thực nghiệm **Dual-Probing** trên hai bộ dữ liệu chuẩn mực của tiếng Việt (VNTC và UIT-VSFC) đã kiểm chứng thành công năng lực biểu diễn vector vượt trội của **`ML-Embed-0.6B`**. Thay vì fine-tuning tốn kém, việc chỉ cần dùng vector embedding qua ML-Embed-0.6B + Logistic Regression mà vẫn đạt độ chính xác **> 85% – 89%** trên cả hai bài toán đã khẳng định: **Latent space của ML-Embed-0.6B đã tự động ánh xạ và phân cụm tiếng Việt ở độ hoàn thiện cao.**. Không bị ảnh hưởng bởi độ dài của văn bản và tuy có kích thước gọn (~ 600M tham số) nhưng vẫn cho ra kết quả tốt, không đòi hỏi quá nhiều về phần cứng. 
 
+## Tài liệu tham khảo
+- [Paper](https://arxiv.org/abs/2605.15081)
+- [Source VSFC Dataset](https://www.kaggle.com/datasets/lenhat543/uit-vsfc/data)
+- [Source VNTC Dataset](https://www.kaggle.com/datasets/trankhanhquynh/vntc-10topics-1-1/data)
+- [Source Model](https://huggingface.co/codefuse-ai/ML-Embed-0.6B)
