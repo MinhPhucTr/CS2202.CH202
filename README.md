@@ -1,4 +1,4 @@
-# Evaluating ML-Embed-0.6B on Vietnamese Text Classification: A Comprehensive Study on Topic & Sentiment
+# Evaluating ML-Embed-0.6B on Vietnamese Text Classification & Retrieval: A Comprehensive Study on MTEB, Topic & Sentiment
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
@@ -11,13 +11,46 @@
 
 Các mô hình Nhúng (Embedding Models) đa ngữ cần có khả năng biểu diễn ngữ nghĩa chính xác trên nhiều cấp độ văn bản khác nhau — từ bài báo dài có cấu trúc đến các bình luận ngắn, không chuẩn mực. Tuy nhiên, các đánh giá hiện tại trên tiếng Việt thường chỉ tập trung vào một tác vụ đơn lẻ, thiếu cái nhìn toàn diện về độ bền vững (robustness) của không gian vector.
 
-Mục tiêu: (a) kiểm chứng khả năng phân chia ranh giới ngữ nghĩa (linear separability) của backbone **`codefuse-ai/ML-Embed-0.6B`** trên hai bài toán đối lập hoàn toàn về tính chất: **Phân loại 10 chủ đề báo chí (VNTC / VN-News-10)** và **Phân loại 3 nhãn cảm xúc sinh viên (UIT-VSFC)**, và (b) giải quyết bài toán tối ưu hiệu năng suy luận trên hạ tầng GPU phổ thông (8GB VRAM).
+Mục tiêu của nghiên cứu này bao gồm hai phần:
+*   **(a) Kiểm chứng benchmark MTEB Tiếng Việt:** Đánh giá năng lực truy xuất thông tin (Dense Retrieval / QA) của backbone **`codefuse-ai/ML-Embed-0.6B`** trên bộ tiêu chuẩn MTEB Tiếng Việt (`Viet.^(50)`).
+*   **(b) Mở rộng kiểm chứng ranh giới ngữ nghĩa (Linear Separability):** Do các giới hạn thực tế về tài nguyên tính toán khi kiểm thử toàn bộ 50 tác vụ MTEB, chúng tôi chủ động mở rộng thực nghiệm sang hai bài toán phân loại đối lập hoàn toàn về tính chất: **Phân loại 10 chủ đề báo chí (VNTC / VN-News-10)** và **Phân loại 3 nhãn cảm xúc sinh viên (UIT-VSFC)**, đồng thời giải quyết bài toán tối ưu hiệu năng suy luận trên hạ tầng GPU phổ thông (8GB VRAM).
 
 ---
 
-## 2. Kiến trúc hệ thống & Bản đồ code
+## 2. Thực nghiệm MTEB Tiếng Việt: Kết quả & Giới hạn (`Viet.⁵⁰`)
 
-Pipeline thực nghiệm được thiết kế dùng chung cho cả hai bài toán, gồm ba khối: `Data Streaming (HF Hub)` → `Embedding Extraction (ML-Embed-0.6B)` → `Linear Probing (Scikit-Learn)`. Toàn bộ quá trình **không thay đổi trọng số (weights) của backbone**, đảm bảo kết quả phản ánh chuẩn xác chất lượng biểu diễn nguyên bản.
+Để đối chứng với các báo cáo trên bảng xếp hạng MTEB đa ngữ, chúng tôi đã triển khai quy trình kiểm thử độc lập cho mô hình `ML-Embed-0.6B`[cite: 6] trên các tác vụ tiếng Việt thuộc bộ tiêu chuẩn MTEB.
+
+### 2.1 Kết quả tái hiện trên 7 tác vụ truy xuất / QA cốt lõi
+Chúng tôi đã trích xuất thành công điểm số đánh giá chuẩn `NDCG@10` (Main Score), `MAP@10` và `Recall@10` cho **7 tập dữ liệu truy xuất thông tin Tiếng Việt**:
+
+| Tác vụ MTEB Tiếng Việt | Chỉ số chính (`NDCG@10`) | `MAP@10` | `Recall@10` | Thời gian chạy (giây) | Nhận định kỹ thuật |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **SciFact-VN** | **61.82%** (0.61823)[cite: 8] | 0.57183[cite: 8] | 0.74415[cite: 8] | ~1,391s[cite: 8] | **Đạt hiệu năng cao nhất** — Khả năng truy xuất tài liệu khoa học/bằng chứng rất chuẩn xác[cite: 8] |
+| **HotpotQA-VN** | **53.43%** (0.53433)[cite: 5] | 0.44436[cite: 5] | 0.55498[cite: 5] | ~10,820s[cite: 5] | Hiệu năng truy xuất đa chặng (multi-hop QA) ở mức ổn định[cite: 5] |
+| **FEVER-VN** | **41.51%** (0.41507)[cite: 4] | 0.36698[cite: 4] | 0.53798[cite: 4] | ~14,359s[cite: 4] | Tác vụ kiểm chứng sự thật, tiêu tốn nhiều thời gian tính toán nhất (~4 giờ GPU)[cite: 4] |
+| **NQ-VN** | **39.93%** (0.39933)[cite: 7] | 0.33602[cite: 7] | 0.57215[cite: 7] | ~7,601s[cite: 7] | Phản ánh đúng năng lực truy xuất câu hỏi thường thức (Natural Questions)[cite: 7] |
+| **ArguAna-VN** | **35.45%** (0.35448)[cite: 1] | 0.23317[cite: 1] | 0.73900[cite: 1] | ~1,876s[cite: 1] | `Recall@10` cao (73.90%) nhưng ranh giới xếp hạng top đầu còn nhiễu[cite: 1] |
+| **ClimateFEVER-VN** | **6.64%** (0.06643)[cite: 2] | 0.04860[cite: 2] | 0.07460[cite: 2] | ~14,100s[cite: 2] | Hiệu năng suy giảm mạnh trên miền dữ liệu biến đổi khí hậu chuyên sâu[cite: 2] |
+| **DBPedia-VN** | **4.79%** (0.04794)[cite: 3] | 0.02322[cite: 3] | 0.03828[cite: 3] | ~9,336s[cite: 3] | Thấp nhất — Thực thể DBPedia tiếng Việt bị lệch phân phối so với tập train[cite: 3] |
+| **TRUNG BÌNH (7 Tác vụ)** | **~34.80%** (0.3480) | — | — | — | **Mốc cơ sở thực nghiệm** cho nhóm tác vụ Dense Retrieval Tiếng Việt |
+
+### 2.2 Lý do không chạy đủ 50 tác vụ (`Viet.⁵⁰`) & Bước chuyển tiếp phương pháp luận
+Mặc dù bài nghiên cứu gốc cung cấp điểm trung bình trên toàn bộ 50 tác vụ tiếng Việt (`Viet.^(50)`), thực nghiệm của chúng tôi **không thể hoàn thành trọn vẹn 50 tác vụ này** do các rào cản phần cứng khắt khe khi thực thi trên hạ tầng **Google Colab (Gói miễn phí - Free Tier)**:
+
+*   **Giới hạn thời gian thực thi (Runtime Timeout):** Gói Colab miễn phí ngắt phiên làm việc liên tục sau ~4–6 giờ. Trong khi đó, chỉ riêng một tác vụ truy xuất quy mô lớn như `FEVER-VN` (~14,359s $\approx$ **3.99 giờ**)[cite: 4] hay `ClimateFEVER-VN` (~14,100s $\approx$ **3.92 giờ**)[cite: 2] đã tiêu tốn gần hết hạn mức. Chạy 50 tác vụ đòi hỏi hàng chục giờ GPU liên tục là không khả thi.
+*   **Nút thắt lưu trữ & I/O:** MTEB yêu cầu tải các shard dữ liệu `.parquet` dung lượng lớn (nhiều file nặng ~270MB/shard)[cite: 9], dễ gây tràn dung lượng ổ đĩa tạm thời (~78GB) nếu nạp đồng thời 50 dataset[cite: 9].
+
+> **Bước chuyển tiếp chiến lược (The Pivot):** 
+> Chính vì không thể chạy trọn vẹn 50 tác vụ truy xuất nặng nề của MTEB, chúng tôi đã đặt ra một giả thuyết mới: *Liệu không gian vector của `ML-Embed-0.6B` có thực sự chất lượng ở cấp độ ngữ nghĩa tổng quát và nhạy bén với cảm xúc trong môi trường ít dữ liệu hay không?* 
+> 
+> Để trả lời câu hỏi đó mà không bị nghẽn cổ chai tài nguyên, chúng tôi **tiến hành kiểm chứng sâu trên 2 bộ dataset tiếng Việt đặc thù: VNTC (văn bản dài) và UIT-VSFC (văn bản ngắn)**. Mọi phân tích chuyên sâu về chất lượng biểu diễn của mô hình từ phần dưới đây sẽ được căn cứ trên 2 bộ dữ liệu này.
+
+---
+
+## 3. Kiến trúc hệ thống & Bản đồ code
+
+Pipeline thực nghiệm cho 2 tác vụ phân loại (VNTC & UIT-VSFC) được thiết kế dùng chung, gồm ba khối: `Data Streaming (HF Hub)` → `Embedding Extraction (ML-Embed-0.6B)` → `Linear Probing (Scikit-Learn)`. Toàn bộ quá trình **không thay đổi trọng số (weights) của backbone**, đảm bảo kết quả phản ánh chuẩn xác chất lượng biểu diễn nguyên bản.
 
 | Bước | Tên | Vai trò kỹ thuật |
 | :--- | :--- | :--- |
@@ -37,37 +70,37 @@ Pipeline thực nghiệm được thiết kế dùng chung cho cả hai bài to�
 
 ---
 
-## 3. Các quyết định thiết kế phương pháp
+## 4. Các quyết định thiết kế phương pháp
 
-### 3.1 Kiểm chứng đa thang đo ngữ nghĩa (Multi-granularity Probing)
+### 4.1 Kiểm chứng đa thang đo ngữ nghĩa (Multi-granularity Probing)
 Việc đánh giá đồng thời VNTC và UIT-VSFC đặt mô hình thử thách trước 2 cực đoan của ngôn ngữ tự nhiên:
 - **VNTC (Topic Classification):** Đo lường năng lực phân cụm từ vựng chuyên ngành trên **văn bản dài chuẩn mực** (báo chí, sa-pô, có ngữ pháp rõ ràng).
 - **UIT-VSFC (Sentiment Analysis):** Đo lường độ nhạy cảm xúc trên **câu ngắn, nhiễu cao**, chứa nhiều ký tự đặc thù đã qua xử lý theo quy chuẩn bộ dataset (như token ẩn danh tên riêng `wzjwz...` hay biểu tượng cảm xúc được chuyển thành chữ `colonlove`, `colonsad`, `vdotv`).
 
-### 3.2 Low-resource Subsampling trên VNTC (Đột phá hiệu năng)
+### 4.2 Low-resource Subsampling trên VNTC (Đột phá hiệu năng)
 Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm chủ động rút gọn mẫu xuống **1.900 dòng Train và 2.500 dòng Test** (giữ đúng tính chất *Test > Train* của bộ gốc), trong khi bộ UIT-VSFC được kiểm thử trên toàn bộ tập Test tiêu chuẩn.
 - **Sample Efficiency:** Kiểm chứng liệu chỉ với ~190 bài báo/chủ đề, mô hình có đủ thông tin để phân loại cho 250 dòng Test/chủ đề hay không.
 
-### 3.3 Parquet Streaming & Mixed Precision (FP16/BF16)
+### 4.3 Parquet Streaming & Mixed Precision (FP16/BF16)
 - Chuẩn nhị phân `.parquet` giải quyết triệt để vấn đề giới hạn 100MB của GitHub và giúp tốc độ nạp dữ liệu tăng gấp 5–8 lần.
-- Đưa mô hình về chuẩn `torch.bfloat16` trên GPU NVIDIA RTX 4060 giúp giảm 50% lượng VRAM tiêu thụ, không xảy ra hiện tượng tràn bộ nhớ (Out-Of-Memory) khi mã hóa batch văn bản dài 512 tokens.
+- Đưa mô hình về chuẩn `torch.bfloat16`[cite: 6] trên GPU NVIDIA RTX 4060 giúp giảm 50% lượng VRAM tiêu thụ, không xảy ra hiện tượng tràn bộ nhớ (Out-Of-Memory) khi mã hóa batch văn bản dài 512 tokens[cite: 6].
 
 ---
 
-## 4. Thiết lập thực nghiệm
+## 5. Thiết lập thực nghiệm
 
 | Hạng mục | Bộ dữ liệu 1: VN-News-10 (VNTC) | Bộ dữ liệu 2: UIT-VSFC |
 | :--- | :--- | :--- |
 | **Tác vụ** | Phân loại chủ đề báo chí (10 lớp) | Phân loại cảm xúc sinh viên (3 lớp: *Neg, Neu, Pos*) |
 | **Đặc trưng văn bản** | Văn bản dài (Trung bình ~300–500 từ), chuẩn văn phạm | Câu ngắn (Trung bình ~15–30 từ), ngôn ngữ nói, chứa emoji |
 | **Quy mô Train / Test** | 1.900 mẫu / 2.500 mẫu (Subsampled benchmark) | 11.426 mẫu / 3.166 mẫu (Full MTEB benchmark) |
-| **Backbone nhúng** | \multicolumn{2}{c}{`codefuse-ai/ML-Embed-0.6B` (~600M parameters, max\_seq\_length = 512)} |
-| **Hạ tầng / Precision** | \multicolumn{2}{c}{NVIDIA RTX 4060 (8GB VRAM) / CUDA 12.x / `bfloat16`} |
+| **Backbone nhúng** | \multicolumn{2}{c}{`codefuse-ai/ML-Embed-0.6B` (~600M parameters, max\_seq\_length = 512)[cite: 6]} |
+| **Hạ tầng / Precision** | \multicolumn{2}{c}{NVIDIA RTX 4060 (8GB VRAM) / CUDA 12.x / `bfloat16`[cite: 6]} |
 | **Chỉ số đánh giá** | \multicolumn{2}{c}{Accuracy (%), Macro F1, Weighted F1} |
 
 ---
 
-## 5. Kết quả thực nghiệm & Nhận định
+## 6. Kết quả thực nghiệm & Nhận định
 
 **Bảng 1 — Hiệu năng Phân loại 10 chủ đề trên VNTC (Subsampled Benchmark: 1.9k Train / 2.5k Test):**
 
@@ -96,51 +129,59 @@ Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm chủ độ
 
 ---
 
-## 6. Phát hiện khoa học & Trung thực về hạn chế
+## 7. Phát hiện khoa học & Trung thực về hạn chế
 
-### 6.1 Vì sao Accuracy trên UIT-VSFC cao (89.36%) nhưng Macro F1 lại thấp (0.71)?
+### 7.1 Vì sao Accuracy trên UIT-VSFC cao (89.36%) nhưng Macro F1 lại thấp (0.71)?
 Kết quả thực nghiệm phơi bày một hiện tượng kinh điển trong học máy: **Sự mất cân bằng phân phối lớp (Class Imbalance) gây nhiễu chỉ số Macro**.
 - Trong 3,166 mẫu Test của UIT-VSFC, hai lớp `Positive` (1,590 mẫu) và `Negative` (1,409 mẫu) chiếm đến **94.7%** tổng dữ liệu và đều đạt F1 > 0.91. Điều này kéo **Accuracy tổng thể lên mức rất cao (89.36%)** và **Weighted F1 đạt 0.88**.
 - Ngược lại, lớp `Neutral` chỉ chiếm **5.3%** (167 mẫu). Khi huấn luyện `LogisticRegression`, đường ranh giới quyết định bị ép nghiêng về 2 lớp đa số, khiến **79% số câu Neutral bị dự đoán nhầm sang Positive hoặc Negative (Recall = 0.21)**.
 - **Bản chất ngữ nghĩa của Neutral:** Trong phản hồi sinh viên, câu trung tính thường chứa các đánh giá "nửa khen nửa chê" (ví dụ: *"Thầy dạy nhiệt tình nhưng bài tập hơi nhiều"*) hoặc các nhận xét mang tính thủ tục, khiến vector nhúng bị nằm ngay giữa vùng đệm của hai cụm cảm xúc chính.
 
-### 6.2 Giải mã ranh giới nhầm lẫn chủ đề trên VNTC (*Đời sống* và *Khoa học*)
+### 7.2 Giải mã ranh giới nhầm lẫn chủ đề trên VNTC (*Đời sống* và *Khoa học*)
 Mặc dù mô hình đạt độ chính xác chung **85.92%** trên tập VNTC rút gọn, kết quả từng lớp chỉ ra 2 cụm có F1-score thấp hơn mức trung bình:
 1. **Lớp *Đời sống* (F1 = 0.58):** Là lớp có số mẫu test nhỏ nhất (`support=98`), đồng thời nội dung "đời sống" có đường biên ngữ nghĩa rất mờ, thường xuyên chia sẻ từ vựng với *Chính trị Xã hội* (tin dân sinh), *Văn hóa* (lối sống) và *Sức khỏe* (sinh hoạt).
 2. **Lớp *Khoa học* (Recall = 0.57):** Precision đạt rất cao (0.87) chứng tỏ khi mô hình đã đoán là *Khoa học* thì độ tin cậy rất lớn. Tuy nhiên, Recall thấp chỉ ra rằng gần một nửa số bài báo khoa học đã bị hút vào không gian vector của lớp *Vi tính* (công nghệ ứng dụng) hoặc *Sức khỏe* (y học - sinh học).
 
-### 6.3 Trung thực về hạn chế & Đề xuất kỹ thuật
+### 7.3 Trung thực về hạn chế & Đề xuất kỹ thuật
 - **Hạn chế:** Linear Probing mặc định (không trọng số) không xử lý tốt các bộ dữ liệu bị mất cân bằng trầm trọng ở lớp thiểu số (như lớp Neutral của UIT-VSFC hay Đời sống của VNTC).
 - **Hướng giải quyết 1 (Cost-sensitive Learning):** Kích hoạt tham số `class_weight='balanced'` trong `LogisticRegression` để tự động tăng mức phạt khi mô hình đoán sai các lớp thiểu số.
 - **Hướng giải quyết 2 (Contrastive ICL / Reranking):** Đối với các câu thuộc vùng xám ngữ nghĩa (Neutral), tích hợp một module k-NN Reranking cục bộ hoặc Few-shot In-Context Learning để xác định lại đường biên nhãn.
 
 ---
 
-## 7. Kết luận & Đóng góp của ML-Embed-0.6B
+## 8. Kết luận & Đóng góp của ML-Embed-0.6B
 
-Thực nghiệm **Dual-Probing** trên hai bộ dữ liệu chuẩn mực của tiếng Việt (VNTC và UIT-VSFC) đã kiểm chứng thành công năng lực biểu diễn vượt trội của **`codefuse-ai/ML-Embed-0.6B`**. Thay vì phải tinh chỉnh trọng số (fine-tuning) tốn kém, việc chỉ cần dùng Linear Probing (đóng băng embedding + Logistic Regression) mà vẫn đạt độ chính xác **> 85% – 89%** trên cả hai bài toán đã khẳng định: **Không gian vector tiềm ẩn (latent space) của ML-Embed-0.6B đã tự động ánh xạ và phân cụm tiếng Việt ở độ hoàn thiện cực cao.**
+Thực nghiệm **Dual-Probing** trên hai bộ dữ liệu chuẩn mực của tiếng Việt (VNTC và UIT-VSFC) đã kiểm chứng thành công năng lực biểu diễn vượt trội của **`codefuse-ai/ML-Embed-0.6B`**[cite: 6]. Thay vì phải tinh chỉnh trọng số (fine-tuning) tốn kém, việc chỉ cần dùng Linear Probing (đóng băng embedding + Logistic Regression) mà vẫn đạt độ chính xác **> 85% – 89%** trên cả hai bài toán đã khẳng định: **Không gian vector tiềm ẩn (latent space) của ML-Embed-0.6B đã tự động ánh xạ và phân cụm tiếng Việt ở độ hoàn thiện cực cao.**
 
-### 7.1 Bảng tổng hợp 4 ưu điểm vượt trội của ML-Embed-0.6B
+### 8.1 Bảng tổng hợp 4 ưu điểm vượt trội của ML-Embed-0.6B
 
-| Năng lực / Khía cạnh | Ưu điểm của `ML-Embed-0.6B` | Minh chứng kỹ thuật từ thực nghiệm |
+| Năng lực / Khía cạnh | Ưu điểm của `ML-Embed-0.6B`[cite: 6] | Minh chứng kỹ thuật từ thực nghiệm |
 | :--- | :--- | :--- |
 | **1. Khả năng đa thang đo (Multi-granularity Robustness)** | Bền vững trên mọi độ dài văn bản mà không bị "thiên lệch thang đo" | Đạt **85.92% Accuracy** trên văn bản báo chí dài (~500 từ) và **89.36% Accuracy** trên câu bình luận ngắn (~15–30 từ) |
 | **2. Hiệu quả mẫu siêu việt (Extreme Sample Efficiency)** | Cần rất ít dữ liệu huấn luyện để thiết lập đường biên ranh giới chuẩn xác | Chỉ cần **1.900 bài Train (~190 mẫu/chủ đề)** để phân loại cho 2.500 bài Test trên 10 chủ đề phức tạp của VNTC |
 | **3. Khả năng kháng nhiễu & Hiểu cú pháp ngách (Noise Resilience)** | Tự động nắm bắt tín hiệu ngữ nghĩa từ ký tự đặc thù mà không cần tiền xử lý phức tạp | Nhận diện chuẩn xác polarity cảm xúc từ các token quy ước như `colonlove`, `colonsad`, `wzjwz...` trên bộ UIT-VSFC |
-| **4. Hiệu năng tính toán / VRAM (Computational Efficiency)** | Kích thước gọn gàng (**~600M tham số**) nhưng mang lại chất lượng tiệm cận các mô hình lớn | Xử lý trọn vẹn dải `max_seq_length = 512` ở chuẩn `bfloat16`, hoàn tất benchmark chỉ trong **1.2 – 2.5 phút** trên card phổ thông RTX 4060 8GB |
+| **4. Hiệu năng tính toán / VRAM (Computational Efficiency)** | Kích thước gọn gàng (**~600M tham số**[cite: 6]) nhưng mang lại chất lượng tiệm cận các mô hình lớn | Xử lý trọn vẹn dải `max_seq_length = 512`[cite: 6] ở chuẩn `bfloat16`[cite: 6], hoàn tất benchmark chỉ trong **1.2 – 2.5 phút** trên card phổ thông RTX 4060 8GB |
 
-### 7.2 Đóng góp cho cộng đồng & Khuyến nghị thực tiễn
+### 8.2 Đóng góp cho cộng đồng & Khuyến nghị thực tiễn
 
-- **Đóng góp phương pháp luận:** Thực nghiệm cho thấy khi xây dựng các hệ thống NLP tiếng Việt hiện đại (như phân loại văn bản tự động, hệ thống gợi ý, hay tìm kiếm ngữ nghĩa trong RAG), **không nhất thiết phải dùng các LLM hàng tỷ tham số để làm feature extractor**. Một mô hình nhúng tầm trung được huấn luyện đa ngữ tốt như `ML-Embed-0.6B` là lựa chọn cân bằng tối ưu giữa **Độ chính xác (Accuracy) — Chi phí compute — Tốc độ suy luận**.
+- **Đóng góp phương pháp luận:** Thực nghiệm cho thấy khi xây dựng các hệ thống NLP tiếng Việt hiện đại (như phân loại văn bản tự động, hệ thống gợi ý, hay tìm kiếm ngữ nghĩa trong RAG), **không nhất thiết phải dùng các LLM hàng tỷ tham số để làm feature extractor**. Một mô hình nhúng tầm trung được huấn luyện đa ngữ tốt như `ML-Embed-0.6B`[cite: 6] là lựa chọn cân bằng tối ưu giữa **Độ chính xác (Accuracy) — Chi phí compute — Tốc độ suy luận**.
 - **Khuyến nghị kiến trúc (Architecture Recommendation):**
-  - **Với văn bản dài & nhiều chủ đề (như VNTC):** Sử dụng `ML-Embed-0.6B` kết hợp với thuật toán cắt mẫu cân bằng lớp (Stratified Sampling) là đủ để xây dựng các hệ thống gắn thẻ báo chí tự động với chi phí thấp.
-  - **Với văn bản ngắn & cảm xúc (như UIT-VSFC):** Nên sử dụng `ML-Embed-0.6B` làm backbone trích xuất vector, nhưng kết hợp thêm trọng số mất cân bằng lớp (`class_weight='balanced'`) ở khâu phân loại để khắc phục điểm yếu trên các lớp thiểu số (như nhãn Neutral).
+  - **Với văn bản dài & nhiều chủ đề (như VNTC):** Sử dụng `ML-Embed-0.6B`[cite: 6] kết hợp với thuật toán cắt mẫu cân bằng lớp (Stratified Sampling) là đủ để xây dựng các hệ thống gắn thẻ báo chí tự động với chi phí thấp.
+  - **Với văn bản ngắn & cảm xúc (như UIT-VSFC):** Nên sử dụng `ML-Embed-0.6B`[cite: 6] làm backbone trích xuất vector, nhưng kết hợp thêm trọng số mất cân bằng lớp (`class_weight='balanced'`) ở khâu phân loại để khắc phục điểm yếu trên các lớp thiểu số (như nhãn Neutral).
 
 ---
 
-## 8. Cách chạy (Reproducibility)
+## 9. Cách chạy (Reproducibility)
+
+Toàn bộ pipeline thực nghiệm được thiết kế tối giản để dễ dàng tái hiện trên local GPU (NVIDIA RTX series) hoặc Google Colab/Kaggle chỉ với vài dòng lệnh:
 
 ```bash
-# 1. Cài đặt PyTorch CUDA và các thư viện thực nghiệm
+# 1. Clone GitHub Repository về máy và di chuyển vào thư mục dự án
+git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
+cd YOUR_REPOSITORY_NAME
+
+# 2. Cài đặt PyTorch hỗ trợ CUDA (Khuyến nghị CUDA 12.4 cho GPU RTX)
 pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu124](https://download.pytorch.org/whl/cu124)
+
+# 3. Cài đặt các thư viện thực nghiệm NLP & Machine Learning
 pip install -r requirements.txt
