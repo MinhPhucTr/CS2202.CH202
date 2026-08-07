@@ -9,56 +9,53 @@
 
 ## 1. Bài toán
 
-Các mô hình Nhúng (Embedding Models) đa ngữ cần có khả năng biểu diễn ngữ nghĩa chính xác trên nhiều cấp độ văn bản khác nhau — từ bài báo dài có cấu trúc đến các bình luận ngắn, không chuẩn mực. Tuy nhiên, các đánh giá hiện tại trên tiếng Việt thường chỉ tập trung vào một tác vụ đơn lẻ, thiếu cái nhìn toàn diện về độ bền vững (robustness) của không gian vector.
+Các mô hình Nhúng đa ngữ cần có khả năng biểu diễn ngữ nghĩa chính xác trên nhiều cấp độ văn bản khác nhau — từ bài báo dài có cấu trúc đến các bình luận ngắn, không liền mạch. Tuy nhiên, các đánh giá hiện tại trên tiếng Việt thường chỉ tập trung vào một tác vụ đơn lẻ, thiếu cái nhìn toàn diện về độ bền vững của không gian vector.
 
 Mục tiêu của nghiên cứu này bao gồm hai phần:
-*   **(a) Kiểm chứng benchmark MTEB Tiếng Việt:** Đánh giá năng lực truy xuất thông tin (Dense Retrieval / QA) của backbone **`codefuse-ai/ML-Embed-0.6B`** trên bộ tiêu chuẩn MTEB Tiếng Việt (`Viet.^(50)`).
-*   **(b) Mở rộng kiểm chứng ranh giới ngữ nghĩa (Linear Separability):** Do các giới hạn thực tế về tài nguyên tính toán khi kiểm thử toàn bộ 50 tác vụ MTEB, chúng tôi chủ động mở rộng thực nghiệm sang hai bài toán phân loại đối lập hoàn toàn về tính chất: **Phân loại 10 chủ đề báo chí (VNTC / VN-News-10)** và **Phân loại 3 nhãn cảm xúc sinh viên (UIT-VSFC)**, đồng thời giải quyết bài toán tối ưu hiệu năng suy luận trên hạ tầng GPU phổ thông (8GB VRAM).
+*   **(a) Kiểm chứng benchmark MTEB Tiếng Việt:** Đánh giá năng lực truy xuất thông tin của backbone **`ML-Embed-0.6B`** trên bộ tiêu chuẩn MTEB Tiếng Việt giống bài nghiên cứu.
+*   **(b) Mở rộng kiểm chứng:** Do các giới hạn thực tế về tài nguyên tính toán khi kiểm thử toàn bộ 50 tác vụ MTEB, nhóm đã mở rộng thực nghiệm sang hai bài toán phân loại đối lập về tính chất: **Phân loại 10 chủ đề báo chí** và **Phân loại 3 nhãn cảm xúc sinh viên**.
 
 ---
 
-## 2. Thực nghiệm MTEB Tiếng Việt: Kết quả & Giới hạn (`Viet.⁵⁰`)
+## 2. Thực nghiệm MTEB Tiếng Việt: Kết quả & Giới hạn
 
 Để đối chứng với các báo cáo trên bảng xếp hạng MTEB đa ngữ, chúng tôi đã triển khai quy trình kiểm thử độc lập cho mô hình `ML-Embed-0.6B`[cite: 6] trên các tác vụ tiếng Việt thuộc bộ tiêu chuẩn MTEB.
 
-### 2.1 Kết quả tái hiện trên 7 tác vụ truy xuất / QA cốt lõi
-Chúng tôi đã trích xuất thành công điểm số đánh giá chuẩn `NDCG@10` (Main Score), `MAP@10` và `Recall@10` cho **7 tập dữ liệu truy xuất thông tin Tiếng Việt**:
+### 2.1 Kết quả tái hiện trên 7 tác vụ truy xuất
+Nhóm đã trích xuất thành công điểm số đánh giá chuẩn `NDCG@10` (Main Score), `MAP@10` và `Recall@10` cho **7 tập dữ liệu truy xuất thông tin Tiếng Việt**:
 
-| Tác vụ MTEB Tiếng Việt | Chỉ số chính (`NDCG@10`) | `MAP@10` | `Recall@10` | Thời gian chạy (giây) | Nhận định kỹ thuật |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **SciFact-VN** | **61.82%** (0.61823)[cite: 8] | 0.57183[cite: 8] | 0.74415[cite: 8] | ~1,391s[cite: 8] | **Đạt hiệu năng cao nhất** — Khả năng truy xuất tài liệu khoa học/bằng chứng rất chuẩn xác[cite: 8] |
-| **HotpotQA-VN** | **53.43%** (0.53433)[cite: 5] | 0.44436[cite: 5] | 0.55498[cite: 5] | ~10,820s[cite: 5] | Hiệu năng truy xuất đa chặng (multi-hop QA) ở mức ổn định[cite: 5] |
-| **FEVER-VN** | **41.51%** (0.41507)[cite: 4] | 0.36698[cite: 4] | 0.53798[cite: 4] | ~14,359s[cite: 4] | Tác vụ kiểm chứng sự thật, tiêu tốn nhiều thời gian tính toán nhất (~4 giờ GPU)[cite: 4] |
-| **NQ-VN** | **39.93%** (0.39933)[cite: 7] | 0.33602[cite: 7] | 0.57215[cite: 7] | ~7,601s[cite: 7] | Phản ánh đúng năng lực truy xuất câu hỏi thường thức (Natural Questions)[cite: 7] |
-| **ArguAna-VN** | **35.45%** (0.35448)[cite: 1] | 0.23317[cite: 1] | 0.73900[cite: 1] | ~1,876s[cite: 1] | `Recall@10` cao (73.90%) nhưng ranh giới xếp hạng top đầu còn nhiễu[cite: 1] |
-| **ClimateFEVER-VN** | **6.64%** (0.06643)[cite: 2] | 0.04860[cite: 2] | 0.07460[cite: 2] | ~14,100s[cite: 2] | Hiệu năng suy giảm mạnh trên miền dữ liệu biến đổi khí hậu chuyên sâu[cite: 2] |
-| **DBPedia-VN** | **4.79%** (0.04794)[cite: 3] | 0.02322[cite: 3] | 0.03828[cite: 3] | ~9,336s[cite: 3] | Thấp nhất — Thực thể DBPedia tiếng Việt bị lệch phân phối so với tập train[cite: 3] |
-| **TRUNG BÌNH (7 Tác vụ)** | **~34.80%** (0.3480) | — | — | — | **Mốc cơ sở thực nghiệm** cho nhóm tác vụ Dense Retrieval Tiếng Việt |
+| Tác vụ MTEB Tiếng Việt | Chỉ số chính (`NDCG@10`) | `MAP@10` | `Recall@10` | Thời gian chạy (giây) |
+| :--- | :---: | :---: | :---: | :---: |
+| **SciFact-VN** | **61.82%** | 0.57183 | 0.74415 | ~1,391s |
+| **HotpotQA-VN** | **53.43%** | 0.44436 | 0.55498 | ~10,820s |
+| **FEVER-VN** | **41.51%** | 0.36698 | 0.53798 | ~14,359s |
+| **NQ-VN** | **39.93%** | 0.33602 | 0.57215 | ~7,601s |
+| **ArguAna-VN** | **35.45%** | 0.23317 | 0.73900 | ~1,876s |
+| **ClimateFEVER-VN** | **6.64%** | 0.04860 | 0.07460 | ~14,100s |
+| **DBPedia-VN** | **4.79%** | 0.02322 | 0.03828 | ~9,336s |
+| **TRUNG BÌNH** | **~34.80%** | — | — | — |
 
-### 2.2 Lý do không chạy đủ 50 tác vụ (`Viet.⁵⁰`) & Bước chuyển tiếp phương pháp luận
-Mặc dù bài nghiên cứu gốc cung cấp điểm trung bình trên toàn bộ 50 tác vụ tiếng Việt (`Viet.^(50)`), thực nghiệm của chúng tôi **không thể hoàn thành trọn vẹn 50 tác vụ này** do các rào cản phần cứng khắt khe khi thực thi trên hạ tầng **Google Colab (Gói miễn phí - Free Tier)**:
+### 2.2 Lý do không chạy đủ 50 tác vụ & Thay đổi thực nghiệm
+Mặc dù bài nghiên cứu gốc cung cấp điểm trung bình trên toàn bộ 50 tác vụ tiếng Việt (`Viet.^(50)`), thực nghiệm của nhóm **không thể hoàn thành trọn vẹn 50 tác vụ này** do các rào cản về phần cứng của **Google Colab bản miễn phí**:
 
-*   **Giới hạn thời gian thực thi (Runtime Timeout):** Gói Colab miễn phí ngắt phiên làm việc liên tục sau ~4–6 giờ. Trong khi đó, chỉ riêng một tác vụ truy xuất quy mô lớn như `FEVER-VN` (~14,359s $\approx$ **3.99 giờ**)[cite: 4] hay `ClimateFEVER-VN` (~14,100s $\approx$ **3.92 giờ**)[cite: 2] đã tiêu tốn gần hết hạn mức. Chạy 50 tác vụ đòi hỏi hàng chục giờ GPU liên tục là không khả thi.
-*   **Nút thắt lưu trữ & I/O:** MTEB yêu cầu tải các shard dữ liệu `.parquet` dung lượng lớn (nhiều file nặng ~270MB/shard)[cite: 9], dễ gây tràn dung lượng ổ đĩa tạm thời (~78GB) nếu nạp đồng thời 50 dataset[cite: 9].
+*   **Giới hạn thời gian thực thi:** Gói Colab miễn phí giới hạn phiên hoạt động ~4–6 giờ. Trong khi đó, chỉ riêng một tác vụ truy xuất từ `FEVER-VN` (~14,359s $\approx$ **3.99 giờ**) hay `ClimateFEVER-VN` (~14,100s $\approx$ **3.92 giờ**) đã tiêu tốn gần hết hạn mức. Chạy 50 tác vụ đòi hỏi hàng chục giờ GPU liên tục là không khả thi.
 
-> **Bước chuyển tiếp chiến lược (The Pivot):** 
-> Chính vì không thể chạy trọn vẹn 50 tác vụ truy xuất nặng nề của MTEB, chúng tôi đã đặt ra một giả thuyết mới: *Liệu không gian vector của `ML-Embed-0.6B` có thực sự chất lượng ở cấp độ ngữ nghĩa tổng quát và nhạy bén với cảm xúc trong môi trường ít dữ liệu hay không?* 
-> 
-> Để trả lời câu hỏi đó mà không bị nghẽn cổ chai tài nguyên, chúng tôi **tiến hành kiểm chứng sâu trên 2 bộ dataset tiếng Việt đặc thù: VNTC (văn bản dài) và UIT-VSFC (văn bản ngắn)**. Mọi phân tích chuyên sâu về chất lượng biểu diễn của mô hình từ phần dưới đây sẽ được căn cứ trên 2 bộ dữ liệu này.
+> **Thay đổi thực nhiệm:** 
+> Nhóm **quyết định thay đổi hướng kiểm chứng sang 2 bộ dataset tiếng Việt: VNTC và UIT-VSFC**. Mọi phân tích về chất lượng biểu diễn của mô hình từ phần dưới đây sẽ được căn cứ trên 2 bộ dữ liệu này. 
 
 ---
 
-## 3. Kiến trúc hệ thống & Bản đồ code
+## 3. Kiến trúc hệ thống
 
-Pipeline thực nghiệm cho 2 tác vụ phân loại (VNTC & UIT-VSFC) được thiết kế dùng chung, gồm ba khối: `Data Streaming (HF Hub)` → `Embedding Extraction (ML-Embed-0.6B)` → `Linear Probing (Scikit-Learn)`. Toàn bộ quá trình **không thay đổi trọng số (weights) của backbone**, đảm bảo kết quả phản ánh chuẩn xác chất lượng biểu diễn nguyên bản.
+Pipeline thực nghiệm cho 2 tác vụ phân loại được thiết kế dùng chung, gồm ba khối: `Data Streaming` → `Embedding Extraction (ML-Embed-0.6B)` → `Linear Probing (Scikit-Learn)`. Toàn bộ quá trình **không thay đổi trọng số của backbone**, đảm bảo kết quả phản ánh chuẩn xác chất lượng biểu diễn nguyên bản.
 
 | Bước | Tên | Vai trò kỹ thuật |
 | :--- | :--- | :--- |
-| 1 | Parquet Streaming | Nạp trực tiếp dữ liệu nhị phân từ Hugging Face Hub cho cả VNTC và UIT-VSFC, loại bỏ phụ thuộc I/O ổ cứng |
-| 2 | Stratified Sampling | Trộn ngẫu nhiên có cố định seed (`seed=42`), lấy mẫu cân bằng (VNTC: 1.9k Train / 2.5k Test) |
-| 3 | Dual-Probing | Huấn luyện độc lập 2 bộ phân loại tuyến tính cho Tác vụ Chủ đề (10 lớp) và Tác vụ Cảm xúc (3 lớp) |
+| 1 | Parquet Streaming | Nạp trực tiếp dữ liệu từ Hugging Face cho cả VNTC và UIT-VSFC|
+| 2 | Stratified Sampling | Trộn ngẫu nhiên có cố định seed (`seed=42`), lấy mẫu cân bằng (VNTC: 1.9k Train / 2.5k Test). Đối với dữ liệu VNTC nhóm đã cắt ngắn số lượng dòng dữ liệu của file train và file test để thuận tiện cho việc demo|
+| 3 | Dual-Probing | Huấn luyện độc lập 2 bộ phân loại tuyến tính cho Tác vụ Chủ đề và Tác vụ Cảm xúc |
 
-**Bản đồ code → phương pháp** (Repo chia thành 2 script tương ứng):
+**Các thành phần chính**:
 
 | Thành phần | File Script | Hàm / Biến chính | Nhiệm vụ kỹ thuật |
 | :--- | :--- | :--- | :--- |
@@ -72,18 +69,13 @@ Pipeline thực nghiệm cho 2 tác vụ phân loại (VNTC & UIT-VSFC) được
 
 ## 4. Các quyết định thiết kế phương pháp
 
-### 4.1 Kiểm chứng đa thang đo ngữ nghĩa (Multi-granularity Probing)
-Việc đánh giá đồng thời VNTC và UIT-VSFC đặt mô hình thử thách trước 2 cực đoan của ngôn ngữ tự nhiên:
-- **VNTC (Topic Classification):** Đo lường năng lực phân cụm từ vựng chuyên ngành trên **văn bản dài chuẩn mực** (báo chí, sa-pô, có ngữ pháp rõ ràng).
-- **UIT-VSFC (Sentiment Analysis):** Đo lường độ nhạy cảm xúc trên **câu ngắn, nhiễu cao**, chứa nhiều ký tự đặc thù đã qua xử lý theo quy chuẩn bộ dataset (như token ẩn danh tên riêng `wzjwz...` hay biểu tượng cảm xúc được chuyển thành chữ `colonlove`, `colonsad`, `vdotv`).
+### 4.1 Kiểm chứng đa thang đo ngữ nghĩa
+Việc đánh giá đồng thời VNTC và UIT-VSFC đặt mô hình thử thách trước 2 tác vụ nổi bật của xử lý ngôn ngữ tự nhiên:
+- **VNTC (Topic Classification):** Đánh giá khả năng phân cụm từ vựng chuyên ngành trên **văn bản dài**.
+- **UIT-VSFC (Sentiment Analysis):** Đánh giá khả năng nhận biết cảm xúc trên **câu ngắn, nhiễu cao**.
 
-### 4.2 Low-resource Subsampling trên VNTC (Đột phá hiệu năng)
-Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm chủ động rút gọn mẫu xuống **1.900 dòng Train và 2.500 dòng Test** (giữ đúng tính chất *Test > Train* của bộ gốc), trong khi bộ UIT-VSFC được kiểm thử trên toàn bộ tập Test tiêu chuẩn.
-- **Sample Efficiency:** Kiểm chứng liệu chỉ với ~190 bài báo/chủ đề, mô hình có đủ thông tin để phân loại cho 250 dòng Test/chủ đề hay không.
-
-### 4.3 Parquet Streaming & Mixed Precision (FP16/BF16)
-- Chuẩn nhị phân `.parquet` giải quyết triệt để vấn đề giới hạn 100MB của GitHub và giúp tốc độ nạp dữ liệu tăng gấp 5–8 lần.
-- Đưa mô hình về chuẩn `torch.bfloat16`[cite: 6] trên GPU NVIDIA RTX 4060 giúp giảm 50% lượng VRAM tiêu thụ, không xảy ra hiện tượng tràn bộ nhớ (Out-Of-Memory) khi mã hóa batch văn bản dài 512 tokens[cite: 6].
+### 4.2 Subsampling trên VNTC
+Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm rút gọn mẫu xuống **1.900 dòng Train và 2.500 dòng Test** (giữ đúng tỉ lệ *Test > Train* của bộ gốc), trong khi bộ UIT-VSFC được sử dụng toàn bộ tập Train/Test gốc.
 
 ---
 
@@ -94,9 +86,9 @@ Với bộ VNTC gốc nặng (30k Train / 50k Test), thực nghiệm chủ độ
 | **Tác vụ** | Phân loại chủ đề báo chí (10 lớp) | Phân loại cảm xúc sinh viên (3 lớp: *Neg, Neu, Pos*) |
 | **Đặc trưng văn bản** | Văn bản dài (Trung bình ~300–500 từ), chuẩn văn phạm | Câu ngắn (Trung bình ~15–30 từ), ngôn ngữ nói, chứa emoji |
 | **Quy mô Train / Test** | 1.900 mẫu / 2.500 mẫu (Subsampled benchmark) | 11.426 mẫu / 3.166 mẫu (Full MTEB benchmark) |
-| **Backbone nhúng** | \multicolumn{2}{c}{`codefuse-ai/ML-Embed-0.6B` (~600M parameters, max\_seq\_length = 512)[cite: 6]} |
-| **Hạ tầng / Precision** | \multicolumn{2}{c}{NVIDIA RTX 4060 (8GB VRAM) / CUDA 12.x / `bfloat16`[cite: 6]} |
-| **Chỉ số đánh giá** | \multicolumn{2}{c}{Accuracy (%), Macro F1, Weighted F1} |
+| **Backbone nhúng** | ML-Embed-0.6B | ML-Embed-0.6B
+| **Phần cứng** | T4 GPU | T4 GPU
+| **Chỉ số đánh giá** | {Accuracy (%), Macro F1, Weighted F1} | {Accuracy (%), Macro F1, Weighted F1}
 
 ---
 
